@@ -1,0 +1,46 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace CVBuilder.API.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddCvSkills : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "CvSkills",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CvId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CvSkills", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CvSkills_Cvs_CvId",
+                        column: x => x.CvId,
+                        principalTable: "Cvs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CvSkills_CvId",
+                table: "CvSkills",
+                column: "CvId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "CvSkills");
+        }
+    }
+}
