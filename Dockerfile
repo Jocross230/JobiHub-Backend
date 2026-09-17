@@ -5,13 +5,13 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /src
 
-COPY ["CVBuilder.API/CVBuilder.API.csproj", "CVBuilder.API/"]
+COPY ["CVBuilder.API.csproj", "./"]
 
-RUN dotnet restore "CVBuilder.API/CVBuilder.API.csproj"
+RUN dotnet restore "CVBuilder.API.csproj"
 
 COPY . .
 
-RUN dotnet publish "CVBuilder.API/CVBuilder.API.csproj" \
+RUN dotnet publish "CVBuilder.API.csproj" \
     -c Release \
     -o /app/publish \
     /p:UseAppHost=false
