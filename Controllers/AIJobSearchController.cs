@@ -18,6 +18,7 @@ public class AIJobSearchController : ControllerBase
             jobAggregationService;
     }
 
+    [AllowAnonymous]
     [HttpGet("ai-search")]
     public async Task<IActionResult> Search(
         [FromQuery] string query,
