@@ -27,7 +27,8 @@ public class CoverLetterController : ControllerBase
     private int? GetCurrentUserId()
     {
         var userIdClaim =
-            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
 
         if (int.TryParse(userIdClaim, out var userId))
         {
@@ -173,9 +174,6 @@ public class CoverLetterController : ControllerBase
                     request.JobDescription.Trim());
 
             // -----------------------------------------------------
-            // 6. Return generated letter
-            //
-            // IMPORTANT:
             // Nothing is saved to the database.
             // -----------------------------------------------------
 

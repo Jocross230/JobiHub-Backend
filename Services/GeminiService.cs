@@ -26,92 +26,130 @@ public class GeminiService
     // =========================================================
 
     public async Task<string> GenerateCoverLetterAsync(
-        string candidateInformation,
-        string jobTitle,
-        string company,
-        string jobDescription)
+    string candidateInformation,
+    string jobTitle,
+    string company,
+    string jobDescription)
     {
         var prompt = $"""
-        You are an expert professional career writer.
+    You are an expert professional career writer.
 
-        Write a tailored cover letter for the candidate using ONLY the
-        information provided below.
+    Write a tailored cover letter for the candidate using ONLY the
+    information provided below.
 
-        CANDIDATE INFORMATION:
-        {candidateInformation}
+    CANDIDATE INFORMATION:
+    {candidateInformation}
 
-        JOB INFORMATION:
-        Job Title: {jobTitle}
-        Company: {company}
+    JOB INFORMATION:
+    Job Title: {jobTitle}
+    Company: {company}
 
-        JOB DESCRIPTION:
-        {jobDescription}
+    JOB DESCRIPTION:
+    {jobDescription}
 
-        INSTRUCTIONS:
+    INSTRUCTIONS:
 
-        1. Tailor the letter specifically to the job title, company,
-           and job description.
+    1. Tailor the letter specifically to the job title, company,
+       and job description.
 
-        2. Identify the most relevant skills, experience, projects,
-           and education from the candidate's CV.
+    2. Identify the most relevant skills, experience, projects,
+       and education from the candidate's CV.
 
-        3. Connect the candidate's real experience to the requirements
-           of the job.
+    3. Connect the candidate's real experience to the requirements
+       of the job.
 
-        4. NEVER invent or assume:
-           - skills
-           - qualifications
-           - certifications
-           - work experience
-           - companies
-           - achievements
-           - technologies
-           - responsibilities
-           - degrees
-           - years of experience
+    4. NEVER invent or assume:
+       - skills
+       - qualifications
+       - certifications
+       - work experience
+       - companies
+       - achievements
+       - technologies
+       - responsibilities
+       - degrees
+       - years of experience
 
-        5. Do not claim the candidate has experience with something
-           unless it appears in the candidate information.
+    5. Do not claim the candidate has experience with something
+       unless it appears in the candidate information.
 
-        6. Do not copy the job description word-for-word.
+    6. Do not copy the job description word-for-word.
 
-        7. Make the letter sound natural and human rather than robotic.
+    7. Make the letter sound natural and human rather than robotic.
 
-        8. Keep it professional and concise.
+    8. Keep it professional and concise.
 
-        9. Aim for approximately 300-400 words.
+    9. Aim for approximately 300-400 words.
 
-        10. Do not include a subject line.
+    10. Do not include a subject line.
 
-        11. Do not include placeholders such as:
-            [Name]
-            [Company]
-            [Hiring Manager]
+    11. Do not include placeholders such as:
+        [Name]
+        [Company]
+        [Hiring Manager]
 
-        12. Do not add fake contact information.
+    12. Do not add fake contact information.
 
-        13. Return ONLY the cover letter.
-        """;
+    13. Return ONLY the cover letter.
+    """;
 
-        var response = await _client.Models.GenerateContentAsync(
-            model: "gemini-3.6-flash",
-            contents: prompt
-        );
+        const int maxAttempts = 3;
 
-        var text = response.Candidates?
-            .FirstOrDefault()?
-            .Content?
-            .Parts?
-            .FirstOrDefault()?
-            .Text;
-
-        if (string.IsNullOrWhiteSpace(text))
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            throw new InvalidOperationException(
-                "Gemini returned an empty response.");
+            try
+            {
+                Console.WriteLine(
+                    $"===== GEMINI COVER LETTER ATTEMPT {attempt}/{maxAttempts} =====");
+
+                var response = await _client.Models.GenerateContentAsync(
+                    model: "gemini-3.6-flash",
+                    contents: prompt
+                );
+
+                var text = response.Candidates?
+                    .FirstOrDefault()?
+                    .Content?
+                    .Parts?
+                    .FirstOrDefault()?
+                    .Text;
+
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    throw new InvalidOperationException(
+                        "Gemini returned an empty response.");
+                }
+
+                Console.WriteLine(
+                    "===== GEMINI COVER LETTER SUCCESS =====");
+
+                return text.Trim();
+            }
+            catch (Google.GenAI.ServerError ex)
+            {
+                Console.WriteLine(
+                    $"Gemini temporary server error on attempt {attempt}:");
+                Console.WriteLine(ex.Message);
+
+                if (attempt == maxAttempts)
+                {
+                    throw new GeminiTemporaryException(
+                        "Our AI service is temporarily busy. Please try again in a few moments.",
+                        ex);
+                }
+
+                var delaySeconds = Math.Pow(2, attempt);
+
+                Console.WriteLine(
+                    $"Retrying Gemini in {delaySeconds} seconds...");
+
+                await Task.Delay(
+                    TimeSpan.FromSeconds(delaySeconds));
+            }
         }
 
-        return text.Trim();
+        throw new GeminiTemporaryException(
+            "Our AI service is temporarily busy. Please try again in a few moments.");
     }
 
     // =========================================================
@@ -247,4 +285,18 @@ public class ExternalJobResult
     public string Description { get; set; } = string.Empty;
 
     public List<string> Skills { get; set; } = new();
+}
+public class GeminiTemporaryException : Exception
+{
+    public GeminiTemporaryException(string message)
+        : base(message)
+    {
+    }
+
+    public GeminiTemporaryException(
+        string message,
+        Exception innerException)
+        : base(message, innerException)
+    {
+    }
 }
