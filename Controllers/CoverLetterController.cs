@@ -10,7 +10,7 @@ namespace CVBuilder.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+//[Authorize]
 public class CoverLetterController : ControllerBase
 {
     private readonly CvBuilderDbContext _context;
